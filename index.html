@@ -257,9 +257,8 @@
 </div>
 
 <script type="text/javascript">
-    // ================= CONFIGURATION =================
-    // IMPORTANT: Change this URL to the exact location of your api.php on InfinityFree or your chosen host.
-    const API_URL = "https://your-domain.infinityfreeapp.com/api.php";
+    // ================= API URL =================
+const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
     // =================================================
 
     var currentOptions = []; 
@@ -284,7 +283,6 @@
         }
     }
 
-    // Modern polished wheel drawer with sideways radial aligned texts
     function drawWheel() {
         var canvas = document.getElementById("wheelCanvas");
         if (!canvas.getContext) return;
@@ -327,7 +325,7 @@
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 11px system-ui, -apple-system, sans-serif";
             
-            // Trim words gracefully to prevent outer boundary overflow
+            // Trim words to prevent outer boundary overflow
             var text = item.name;
             if (text.length > 26) text = text.substring(0, 23) + "...";
             
