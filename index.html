@@ -60,19 +60,17 @@
             line-height: 1.6;
         }
 
-        input[type="text"] {
+        input[type="text"], textarea {
             background-color: #0d1117;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             color: var(--text-bright);
             padding: 10px 14px;
             font-size: 16px;
-            width: 250px;
-            margin-right: 12px;
             outline: none;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, textarea:focus {
             border-color: var(--accent-blue);
         }
 
@@ -197,6 +195,8 @@
             font-size: 13px;
             color: #8b949e;
             line-height: 1.4;
+            border-top: 1px dotted rgba(255,255,255,0.05);
+            padding-top: 5px;
         }
     </style>
 </head>
@@ -205,14 +205,14 @@
 <div class="container">
     <header class="panel">
         <h1>☠️ ONE PIECE CHARACTER BUILDER ☠️</h1>
-        <p>A completely secure, server-verified character progression roller based off of https://www.reddit.com/r/OnePiece/comments/1mh6yte/one_piece_wheel_of_names_build_a_character/.</p>
+        <p>A completely secure, server-verified character progression roller. Original idea from that one reddit post that pops up when you search "One Piece Character Builder wheel of names"</p>
     </header>
 
     <div id="step-name" class="panel" style="text-align: center;">
         <h2 style="margin-bottom: 20px;">Enter name here</h2>
         <form id="nameForm" onsubmit="startGame(); return false;">
-            <input type="text" id="enderName" maxlength="30" required placeholder="Pirate Name" value="Bob">
-            <button type="submit">Start</button>
+            <input type="text" id="enderName" maxlength="30" required placeholder="Pirate Name" value="Bob" style="width: 250px; margin-right: 12px;">
+            <button type="submit">Set Sail!</button>
         </form>
     </div>
 
@@ -237,30 +237,44 @@
     </div>
 
     <div id="step-done" class="panel" style="display:none; text-align: center;">
-        <h2 style="color: var(--accent-gold);">Complete!</h2>
+        <h2 style="color: var(--accent-gold);">Character Complete</h2>
         <p>What do you want to do next?</p>
-        <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
+        <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
             <button onclick="exportCharacter()">Save To Text File (.txt)</button>
-            <button onclick="postToChat()" style="background-color: var(--btn-green); color:#fff;">Post Globally to Community</button>
+            <button id="postBuildBtn" onclick="postToChat()" style="background-color: var(--btn-green); color:#fff;">Post Build to Board</button>
+            <button onclick="backToMenu()" style="background-color: #ff5500; color:#fff;">Back to Main Menu</button>
         </div>
     </div>
 
     <div class="panel">
+        <h3 style="margin-bottom: 15px;">🏆 Recent Sea Legends & Tavern Chat</h3>
+        
+        <div style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+            <form id="chatForm" onsubmit="postCustomMessage(); return false;" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="chatUser" placeholder="Choose Username" maxlength="15" required style="width: 150px;">
+                <input type="text" id="chatMsg" placeholder="Say something in the Tavern..." maxlength="80" required style="flex: 1; min-width: 200px;">
+                <button type="submit" style="background-color: var(--accent-gold); color: #000;">Send Message</button>
+            </form>
+        </div>
+
         <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 15px;">
-            <h3 style="margin:0;">🏆 Recent People's Charaacters</h3>
+            <span style="color: #8b949e;">Scroll down to view custom chat messages and shared builds:</span>
             <button onclick="loadChat()" style="padding: 6px 14px; font-size: 13px;">Refresh Feed</button>
         </div>
-        <div id="chatBox" class="sheet-box" style="max-height: 350px;">
-            Loading...
+        
+        <div id="chatBox" class="sheet-box" style="max-height: 400px;">
+            Loading sea logs...
         </div>
     </div>
 </div>
 
 <script type="text/javascript">
-    // ================= API URL =================
-const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
+    // ================= CONFIGURATION =================
+    // Point this to your live working InfinityFree domain
+    const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
     // =================================================
 
+    var phpSessionId = null; // Holds the dynamically loaded PHP Session token
     var currentOptions = []; 
     var totalWeight = 0;
     var isSpinning = false;
@@ -298,25 +312,20 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
             var item = currentOptions[i];
             var arc = (item.weight / totalWeight) * (2 * Math.PI);
             
-            // Dynamic colorful hue generators
             ctx.fillStyle = "hsl(" + ((i * 360 / numOptions) % 360) + ", 55%, 35%)";
             
-            // Slice Arc drawing
             ctx.beginPath();
             ctx.arc(200, 200, 195, currentAngle, currentAngle + arc, false);
             ctx.lineTo(200, 200);
             ctx.fill();
 
-            // Slices outer sleek borders
             ctx.strokeStyle = "rgba(0,0,0,0.15)";
             ctx.lineWidth = 1.5;
             ctx.stroke();
             
-            // TEXT WRITING: Rotated sideways along the radius
             ctx.save();
             ctx.translate(200, 200);
             
-            // Align the context rotated center line to the middle of the current wedge
             var midAngle = currentAngle + (arc / 2);
             ctx.rotate(midAngle);
             
@@ -325,11 +334,9 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 11px system-ui, -apple-system, sans-serif";
             
-            // Trim words to prevent outer boundary overflow
             var text = item.name;
             if (text.length > 26) text = text.substring(0, 23) + "...";
             
-            // Adjust label text coordinates: 185 is sitting neatly near the outer edge
             if (arc > 0.035) { 
                 ctx.fillText(text, 182, 0);
             }
@@ -338,7 +345,6 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
             currentAngle += arc;
         }
 
-        // Draw dynamic inner structural wheel hub cap
         ctx.beginPath();
         ctx.arc(200, 200, 24, 0, 2 * Math.PI);
         ctx.fillStyle = "#161b22";
@@ -352,24 +358,37 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
         return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
     }
 
-    function startGame() {
-        var name = document.getElementById("enderName").value;
+    // High performance network request with direct Session Token passing
+    function makeAPIRequest(formData, callback) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", API_URL, true);
         xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhr.withCredentials = true; // Essential to transport secure PHP session cookie cross-site
+        if (phpSessionId) {
+            xhr.setRequestHeader("X-PHP-Session-Id", phpSessionId);
+        }
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                var res = JSON.parse(xhr.responseText);
-                processWheelData(res.wheel_data);
-                document.getElementById("step-name").style.display = "none";
-                document.getElementById("step-spinner").style.display = "block";
-                startAngle = 0;
-                drawWheel();
-                updateSheet({name: name, results: {}});
+                var response = JSON.parse(xhr.responseText);
+                callback(response);
             }
         };
-        xhr.send("action=start&name=" + encodeURIComponent(name));
+        xhr.send(formData);
+    }
+
+    function startGame() {
+        var name = document.getElementById("enderName").value;
+        makeAPIRequest("action=start&name=" + encodeURIComponent(name), function(res) {
+            if (res.session_id) {
+                phpSessionId = res.session_id; // Secure Session ID captured
+            }
+            processWheelData(res.wheel_data);
+            document.getElementById("step-name").style.display = "none";
+            document.getElementById("step-spinner").style.display = "block";
+            startAngle = 0;
+            drawWheel();
+            updateSheet({name: name, results: {}});
+            document.getElementById("spinBtn").disabled = false;
+        });
     }
 
     function spinWheel() {
@@ -377,78 +396,69 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
         isSpinning = true;
         document.getElementById("spinBtn").disabled = true;
 
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", API_URL, true);
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhr.withCredentials = true; 
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                var res = JSON.parse(xhr.responseText);
-                if (res.status === 'done') {
-                    showDone();
-                    return;
-                }
-                
-                var targetIdx = res.selectedIndex;
-                var accumulatedAngle = 0;
-                var targetSliceArc = 0;
-                var targetSliceStartAngle = 0;
-
-                for (var i = 0; i < currentOptions.length; i++) {
-                    var arc = (currentOptions[i].weight / totalWeight) * (2 * Math.PI);
-                    if (i === targetIdx) {
-                        targetSliceArc = arc;
-                        targetSliceStartAngle = accumulatedAngle;
-                        break;
-                    }
-                    accumulatedAngle += arc;
-                }
-
-                // Target calibration formula to point directly at top 270 deg (1.5 * PI)
-                var targetSliceCenter = targetSliceStartAngle + (targetSliceArc / 2);
-                var baseStopAngle = (1.5 * Math.PI) - targetSliceCenter;
-                
-                if (baseStopAngle < 0) {
-                    baseStopAngle += 2 * Math.PI;
-                }
-
-                var currentRotBase = startAngle % (2 * Math.PI);
-                var totalRotationGoal = currentRotBase + (7 * 2 * Math.PI) + baseStopAngle;
-
-                var startTime = null;
-                var duration = 4500; 
-                
-                function animate(timestamp) {
-                    if (!startTime) startTime = timestamp;
-                    var elapsed = timestamp - startTime;
-                    var progress = Math.min(elapsed / duration, 1);
-                    
-                    // High-quality cubic ease-out rotation speed curve
-                    var ease = 1 - Math.pow(1 - progress, 4);
-                    startAngle = currentRotBase + (totalRotationGoal - currentRotBase) * ease;
-                    drawWheel();
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        isSpinning = false;
-                        updateSheet(res.character);
-
-                        if (res.next_wheel > 14) {
-                            showDone();
-                        } else {
-                            processWheelData(res.next_options);
-                            document.getElementById("wheelTitle").innerHTML = "Wheel " + res.next_wheel + ": " + res.next_wheel_name;
-                            startAngle = 0;
-                            drawWheel();
-                            document.getElementById("spinBtn").disabled = false;
-                        }
-                    }
-                }
-                requestAnimationFrame(animate);
+        var params = "action=spin" + (phpSessionId ? "&session_id=" + phpSessionId : "");
+        makeAPIRequest(params, function(res) {
+            if (res.status === 'done') {
+                showDone();
+                return;
             }
-        };
-        xhr.send("action=spin");
+            
+            var targetIdx = res.selectedIndex;
+            var accumulatedAngle = 0;
+            var targetSliceArc = 0;
+            var targetSliceStartAngle = 0;
+
+            for (var i = 0; i < currentOptions.length; i++) {
+                var arc = (currentOptions[i].weight / totalWeight) * (2 * Math.PI);
+                if (i === targetIdx) {
+                    targetSliceArc = arc;
+                    targetSliceStartAngle = accumulatedAngle;
+                    break;
+                }
+                accumulatedAngle += arc;
+            }
+
+            var targetSliceCenter = targetSliceStartAngle + (targetSliceArc / 2);
+            var baseStopAngle = (1.5 * Math.PI) - targetSliceCenter;
+            
+            if (baseStopAngle < 0) {
+                baseStopAngle += 2 * Math.PI;
+            }
+
+            var currentRotBase = startAngle % (2 * Math.PI);
+            var totalRotationGoal = currentRotBase + (7 * 2 * Math.PI) + baseStopAngle;
+
+            var startTime = null;
+            var duration = 4500; 
+            
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                var elapsed = timestamp - startTime;
+                var progress = Math.min(elapsed / duration, 1);
+                
+                var ease = 1 - Math.pow(1 - progress, 4);
+                startAngle = currentRotBase + (totalRotationGoal - currentRotBase) * ease;
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    updateSheet(res.character);
+
+                    if (res.next_wheel > 14) {
+                        showDone();
+                    } else {
+                        processWheelData(res.next_options);
+                        document.getElementById("wheelTitle").innerHTML = "Wheel " + res.next_wheel + ": " + res.next_wheel_name;
+                        startAngle = 0;
+                        drawWheel();
+                        document.getElementById("spinBtn").disabled = false;
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        });
     }
 
     function updateSheet(charData) {
@@ -467,6 +477,15 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
     function showDone() {
         document.getElementById("step-spinner").style.display = "none";
         document.getElementById("step-done").style.display = "block";
+        document.getElementById("postBuildBtn").disabled = false;
+    }
+
+    // resets back to the home screen smoothly
+    function backToMenu() {
+        document.getElementById("step-done").style.display = "none";
+        document.getElementById("step-spinner").style.display = "none";
+        document.getElementById("step-name").style.display = "block";
+        phpSessionId = null; // Clear cached session
     }
 
     function exportCharacter() {
@@ -478,7 +497,6 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
             text += wheelNames[i] + ": " + (window.latestCharData.results[i] || "N/A") + "\n";
         }
         text += "====================================\n";
-        text += "Secure server session signature verified.\n";
         
         var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
         var a = document.createElement("a");
@@ -487,18 +505,27 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
         a.click();
     }
 
+    // Post final build to database board
     function postToChat() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", API_URL, true);
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhr.withCredentials = true; 
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                alert("Legend shared successfully with the community!");
-                loadChat();
-            }
-        };
-        xhr.send("action=post_chat");
+        var btn = document.getElementById("postBuildBtn");
+        btn.disabled = true;
+        var params = "action=post_chat" + (phpSessionId ? "&session_id=" + phpSessionId : "");
+        makeAPIRequest(params, function(res) {
+            alert("Build shared successfully!");
+            loadChat();
+        });
+    }
+
+    // Post custom user chat message
+    function postCustomMessage() {
+        var u = document.getElementById("chatUser").value;
+        var m = document.getElementById("chatMsg").value;
+        var params = "action=post_chat&username=" + encodeURIComponent(u) + "&message=" + encodeURIComponent(m);
+        
+        makeAPIRequest(params, function(res) {
+            document.getElementById("chatMsg").value = ""; // Clear chat input bar
+            loadChat();
+        });
     }
 
     function loadChat() {
@@ -509,19 +536,32 @@ const API_URL = "http://onepiececharacterspinner.rf.gd/api.php";
                 var list = JSON.parse(xhr.responseText);
                 var html = "";
                 if (list.length === 0) {
-                    html = "<div style='color:#8b949e; text-align:center; padding: 20px;'>No logs on the board yet. Be the first to sail!</div>";
+                    html = "<div style='color:#8b949e; text-align:center; padding: 20px;'>Tavern is quiet... Post a message to get things started!</div>";
                 }
                 for (var i = 0; i < list.length; i++) {
                     var item = list[i];
-                    html += "<div class='chat-post'><b>" + item.name + "</b><small>" + item.time + "</small><div class='chat-row-details'>";
-                    var buildParts = [];
-                    for (var w = 1; w <= 14; w++) {
-                        if (item.build[w] && item.build[w].indexOf("Skipped") === -1) {
-                            buildParts.push("<b>" + wheelNames[w] + "</b>: " + item.build[w]);
-                        }
+                    html += "<div class='chat-post'>";
+                    html += "<b>" + item.name + "</b>";
+                    html += "<small>" + item.time + "</small>";
+                    
+                    // Display message body
+                    if (item.message) {
+                        html += "<div style='margin-top: 5px; color: var(--text-bright);'>" + item.message + "</div>";
                     }
-                    html += buildParts.join(" | ");
-                    html += "</div></div>";
+
+                    // Display accompanying character build details if attached
+                    if (item.build) {
+                        html += "<div class='chat-row-details'>";
+                        var buildParts = [];
+                        for (var w = 1; w <= 14; w++) {
+                            if (item.build[w] && item.build[w].indexOf("Skipped") === -1) {
+                                buildParts.push("<b>" + wheelNames[w] + "</b>: " + item.build[w]);
+                            }
+                        }
+                        html += buildParts.join(" | ");
+                        html += "</div>";
+                    }
+                    html += "</div>";
                 }
                 document.getElementById("chatBox").innerHTML = html;
             }
