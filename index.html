@@ -212,7 +212,7 @@
         <h2 style="margin-bottom: 20px;">Enter name here</h2>
         <form id="nameForm" onsubmit="startGame(); return false;">
             <input type="text" id="enderName" maxlength="30" required placeholder="Pirate Name" value="Bob" style="width: 250px; margin-right: 12px;">
-            <button type="submit">Set Sail!</button>
+            <button type="submit">Start</button>
         </form>
     </div>
 
@@ -247,12 +247,12 @@
     </div>
 
     <div class="panel">
-        <h3 style="margin-bottom: 15px;">🏆 Recent Sea Legends & Tavern Chat</h3>
+        <h3 style="margin-bottom: 15px;">🏆 Other Characters & Chat</h3>
         
         <div style="background-color: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color);">
             <form id="chatForm" onsubmit="postCustomMessage(); return false;" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                 <input type="text" id="chatUser" placeholder="Choose Username" maxlength="15" required style="width: 150px;">
-                <input type="text" id="chatMsg" placeholder="Say something in the Tavern..." maxlength="80" required style="flex: 1; min-width: 200px;">
+                <input type="text" id="chatMsg" placeholder="Say something..." maxlength="80" required style="flex: 1; min-width: 200px;">
                 <button type="submit" style="background-color: var(--accent-gold); color: #000;">Send Message</button>
             </form>
         </div>
@@ -263,7 +263,7 @@
         </div>
         
         <div id="chatBox" class="sheet-box" style="max-height: 400px;">
-            Loading sea logs...
+            Loading...
         </div>
     </div>
 </div>
