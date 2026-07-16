@@ -205,11 +205,11 @@
 <div class="container">
     <header class="panel">
         <h1>☠️ ONE PIECE CHARACTER BUILDER ☠️</h1>
-        <p>A completely secure, server-verified character progression roller. Open-source frontend, server-side tamper prevention.</p>
+        <p>A completely secure, server-verified character progression roller.</p>
     </header>
 
     <div id="step-name" class="panel" style="text-align: center;">
-        <h2 style="margin-bottom: 20px;">Declare Your Name to the Sea</h2>
+        <h2 style="margin-bottom: 20px;">Enter name here</h2>
         <form id="nameForm" onsubmit="startGame(); return false;">
             <input type="text" id="enderName" maxlength="30" required placeholder="Pirate Name" value="Luffy's Rival">
             <button type="submit">Set Sail!</button>
@@ -237,8 +237,8 @@
     </div>
 
     <div id="step-done" class="panel" style="display:none; text-align: center;">
-        <h2 style="color: var(--accent-gold);">Your Legend has Been Forged!</h2>
-        <p>The Grand Line has recognized your potential. What would you like to do with your build?</p>
+        <h2 style="color: var(--accent-gold);">Complete!</h2>
+        <p>What do you want to do next?</p>
         <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
             <button onclick="exportCharacter()">Save To Text File (.txt)</button>
             <button onclick="postToChat()" style="background-color: var(--btn-green); color:#fff;">Post Globally to Community</button>
@@ -247,11 +247,11 @@
 
     <div class="panel">
         <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 15px;">
-            <h3 style="margin:0;">🏆 Recent Sea Legends</h3>
+            <h3 style="margin:0;">🏆 Recent People's Charaacters</h3>
             <button onclick="loadChat()" style="padding: 6px 14px; font-size: 13px;">Refresh Feed</button>
         </div>
         <div id="chatBox" class="sheet-box" style="max-height: 350px;">
-            Loading sea logs...
+            Loading...
         </div>
     </div>
 </div>
